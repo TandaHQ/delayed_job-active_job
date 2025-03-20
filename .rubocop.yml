@@ -102,3 +102,12 @@ Style/StringLiterals:
 
 Style/TrivialAccessors:
   AllowPredicates: true
+
+Lint/EmptyFile:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false

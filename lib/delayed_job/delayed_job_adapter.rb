@@ -25,13 +25,17 @@ module ActiveJob
 
       def enqueue_at(job, timestamp)
         delayed_job = Delayed::Job.enqueue(
-          JobWrapper.new(job.serialize),
-          queue: job.queue_name,
-          priority: job.priority,
-          run_at: Time.at(timestamp)
+          JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority, run_at: Time.at(timestamp)
         )
         job.provider_job_id = delayed_job.id
         delayed_job
+      end
+
+      def enqueue_all(jobs) # :nodoc:
+        wrapped_jobs = jobs.map do |job|
+          Delayed::Job.new(payload_object: JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority)
+        end
+        Delayed::Job.insert_all(wrapped_jobs)
       end
 
       class JobWrapper # :nodoc:

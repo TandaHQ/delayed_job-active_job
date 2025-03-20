@@ -7,6 +7,10 @@
 
 The Delayed Job adapter will be [removed from Rails soon](https://github.com/rails/rails/commit/d55ec9d5831b05ea5de75c105635c80376c0bf11). This gem extracts it so that you can continue using Delayed Job with Active Job.
 
+It also implements some new features the Rails adapter didn't support:
+
+- Support for [`perform_all_later`](https://github.com/rails/rails/pull/46603)
+
 ---
 
 - [Quick start](#quick-start)
@@ -20,8 +24,11 @@ The Delayed Job adapter will be [removed from Rails soon](https://github.com/rai
 gem install delayed_job-active_job
 ```
 
+Configure the Active Job backend. [See the Rails docs for more information](https://guides.rubyonrails.org/active_job_basics.html#alternate-queuing-backends).
+
 ```ruby
-require "delayed_job/active_job"
+# config/application.rb
+config.active_job.queue_adapter = :delayed_job
 ```
 
 ## Support
