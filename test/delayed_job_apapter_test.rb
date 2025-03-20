@@ -36,6 +36,26 @@ class HelloJob < ActiveJob::Base
   end
 end
 
+class CallbackJob < ActiveJob::Base
+  before_perform :say_hi_before_perform
+  before_enqueue :say_hi_before_enqueue
+
+  def perform(greeter)
+    JobBuffer.add("#{greeter} says hello in perform")
+  end
+
+  private
+
+  def say_hi_before_perform
+    JobBuffer.add("job says hello before perform")
+  end
+
+  # This is NOT called when using perform_all_later, per https://github.com/rails/rails/pull/46603
+  def say_hi_before_enqueue
+    JobBuffer.add("job says hello before enqueue")
+  end
+end
+
 class DelayedJobAdapterTest < ActiveSupport::TestCase
   teardown do
     JobBuffer.clear
@@ -84,17 +104,17 @@ class DelayedJobAdapterTest < ActiveSupport::TestCase
 
   test "perform_now" do
     HelloJob.perform_now("Alex")
-    assert_equal ["Alex says hello"], JobBuffer.values.sort
+    assert_equal ["Alex says hello"], JobBuffer.values
   end
 
   test "perform_later" do
     HelloJob.perform_later("Alex")
-    assert_equal ["Alex says hello"], JobBuffer.values.sort
+    assert_equal ["Alex says hello"], JobBuffer.values
   end
 
   test "insert_all_later" do
-    ActiveJob.perform_all_later([HelloJob.new("Jamie"), HelloJob.new("John")])
+    ActiveJob.perform_all_later([HelloJob.new("Jamie"), HelloJob.new("John"), CallbackJob.new("Alex")])
 
-    assert_equal ["Jamie says hello", "John says hello"], JobBuffer.values.sort
+    assert_equal ["Jamie says hello", "John says hello", "job says hello before perform", "Alex says hello in perform"], JobBuffer.values
   end
 end
