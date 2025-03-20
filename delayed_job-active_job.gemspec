@@ -28,5 +28,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
-  # spec.add_dependency "thor", "~> 1.2"
+  spec.add_dependency "activejob", ">= 8"
+  spec.add_dependency "delayed_job_active_record"
 end
