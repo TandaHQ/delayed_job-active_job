@@ -6,6 +6,9 @@ require "active_support/core_ext/string/inflections"
 
 module ActiveJob
   module QueueAdapters
+    # Override existing Rails adapter.
+    remove_const :DelayedJobAdapter if constants.include?(:DelayedJobAdapter)
+
     # = Delayed Job adapter for Active Job
     #
     # Delayed::Job (or DJ) encapsulates the common pattern of asynchronously
@@ -16,7 +19,7 @@ module ActiveJob
     # To use Delayed Job, set the queue_adapter config to +:delayed_job+.
     #
     #   Rails.application.config.active_job.queue_adapter = :delayed_job
-    class DelayedJob < ActiveJob::QueueAdapters::AbstractAdapter
+    class DelayedJobAdapter < ActiveJob::QueueAdapters::AbstractAdapter
       def enqueue(job)
         delayed_job = Delayed::Job.enqueue(JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority)
         job.provider_job_id = delayed_job.id
@@ -32,7 +35,7 @@ module ActiveJob
       end
 
       def enqueue_all(jobs)
-        wrapped_jobs = jobs.map do |job|
+        wrapped_jobs = jobs.filter_map do |job|
           options = Delayed::Backend::JobPreparer.new(JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority).prepare
           job_to_enqueue = Delayed::Job.new(options)
           if Delayed::Worker.delay_job?(job_to_enqueue)
@@ -41,7 +44,7 @@ module ActiveJob
             job_to_enqueue.invoke_job
             nil
           end
-        end.compact
+        end
         Delayed::Job.insert_all(wrapped_jobs)
       end
 
