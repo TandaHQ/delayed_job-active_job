@@ -31,10 +31,17 @@ module ActiveJob
         delayed_job
       end
 
-      def enqueue_all(jobs) # :nodoc:
+      def enqueue_all(jobs)
         wrapped_jobs = jobs.map do |job|
-          Delayed::Job.new(payload_object: JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority)
-        end
+          options = Delayed::Backend::JobPreparer.new(JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority).prepare
+          job_to_enqueue = Delayed::Job.new(options)
+          if Delayed::Worker.delay_job?(job_to_enqueue)
+            job_to_enqueue
+          else
+            job_to_enqueue.invoke_job
+            nil
+          end
+        end.compact
         Delayed::Job.insert_all(wrapped_jobs)
       end
 
