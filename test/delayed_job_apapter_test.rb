@@ -58,6 +58,7 @@ end
 
 class DelayedJobAdapterTest < ActiveSupport::TestCase
   teardown do
+    Delayed::Job.delete_all
     JobBuffer.clear
   end
 
@@ -116,5 +117,42 @@ class DelayedJobAdapterTest < ActiveSupport::TestCase
     ActiveJob.perform_all_later([HelloJob.new("Jamie"), HelloJob.new("John"), CallbackJob.new("Alex")])
 
     assert_equal ["Jamie says hello", "John says hello", "job says hello before perform", "Alex says hello in perform"], JobBuffer.values
+  end
+
+  test "run_at with enqueue" do
+    Delayed::Worker.delay_jobs = true
+
+    HelloJob.perform_later("Alex")
+    assert_empty JobBuffer.values
+    run_at = Delayed::Job.all.first.run_at
+    assert_in_delta run_at, Time.current, 0.01
+  ensure
+    Delayed::Worker.delay_jobs = false
+  end
+
+  test "run_at with enqueue_at" do
+    Delayed::Worker.delay_jobs = true
+
+    expected = 2.days.from_now
+    HelloJob.set(wait_until: expected).perform_later("Alex")
+    assert_empty JobBuffer.values
+    run_at = Delayed::Job.all.first.run_at
+    assert_in_delta run_at, expected, 0.01
+  ensure
+    Delayed::Worker.delay_jobs = false
+  end
+
+  test "run_at with insert_all_later" do
+    Delayed::Worker.delay_jobs = true
+
+    expected = 2.days.from_now
+    job = HelloJob.new("Alex")
+    job.run_at = expected
+    ActiveJob.perform_all_later([job])
+    assert_empty JobBuffer.values
+    run_at = Delayed::Job.all.first.run_at
+    assert_in_delta run_at, expected, 0.01
+  ensure
+    Delayed::Worker.delay_jobs = false
   end
 end

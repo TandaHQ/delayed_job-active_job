@@ -2,3 +2,4 @@
 
 require_relative "delayed_job_adapter"
 require_relative "active_job/version"
+require_relative "active_job/run_at"

@@ -9,7 +9,8 @@ The Delayed Job adapter will be [removed from Rails soon](https://github.com/rai
 
 It also implements some new features the Rails adapter didn't support:
 
-- Support for [`perform_all_later`](https://github.com/rails/rails/pull/46603)
+- Support for [`perform_all_later`](https://github.com/rails/rails/pull/46603).
+- You can set `run_at` directly on a job instance.
 
 ---
 
