@@ -16,7 +16,8 @@ module Delayed
                       :locked_at,
                       :locked_by,
                       :failed_at,
-                      :queue
+                      :queue,
+                      :metadata # for testing job_attributes
 
         include Delayed::Backend::Base
 

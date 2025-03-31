@@ -21,14 +21,24 @@ module ActiveJob
     #   Rails.application.config.active_job.queue_adapter = :delayed_job
     class DelayedJobAdapter < ActiveJob::QueueAdapters::AbstractAdapter
       def enqueue(job)
-        delayed_job = Delayed::Job.enqueue(JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority, run_at: job.run_at)
+        delayed_job = Delayed::Job.enqueue(
+          JobWrapper.new(job.serialize),
+          queue: job.queue_name,
+          priority: job.priority,
+          run_at: job.run_at,
+          **job.job_attributes
+        )
         job.provider_job_id = delayed_job.id
         delayed_job
       end
 
       def enqueue_at(job, timestamp)
         delayed_job = Delayed::Job.enqueue(
-          JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority, run_at: job.run_at || Time.at(timestamp)
+          JobWrapper.new(job.serialize),
+          queue: job.queue_name,
+          priority: job.priority,
+          run_at: job.run_at || Time.at(timestamp),
+          **job.job_attributes
         )
         job.provider_job_id = delayed_job.id
         delayed_job
@@ -36,7 +46,13 @@ module ActiveJob
 
       def enqueue_all(jobs)
         wrapped_jobs = jobs.filter_map do |job|
-          options = Delayed::Backend::JobPreparer.new(JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority, run_at: job.run_at).prepare
+          options = Delayed::Backend::JobPreparer.new(
+            JobWrapper.new(job.serialize),
+            queue: job.queue_name,
+            priority: job.priority,
+            run_at: job.run_at,
+            **job.job_attributes
+          ).prepare
           job_to_enqueue = Delayed::Job.new(options)
           if Delayed::Worker.delay_job?(job_to_enqueue)
             job_to_enqueue.attributes.except("id", "created_at", "updated_at")

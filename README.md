@@ -11,6 +11,7 @@ It also implements some new features the Rails adapter didn't support:
 
 - Support for [`perform_all_later`](https://github.com/rails/rails/pull/46603).
 - You can set `run_at` directly on a job instance.
+- You can persist extra attributes on a job by writing to `job_attributes`.
 
 ---
 

@@ -155,4 +155,41 @@ class DelayedJobAdapterTest < ActiveSupport::TestCase
   ensure
     Delayed::Worker.delay_jobs = false
   end
+
+  test "job attributes with enqueue" do
+    Delayed::Worker.delay_jobs = true
+
+    job = HelloJob.new("Alex")
+    job.job_attributes = { metadata: "foo" }
+    job.enqueue
+
+    assert_equal "foo", Delayed::Job.all.first.metadata
+  ensure
+    Delayed::Worker.delay_jobs = false
+  end
+
+  test "job attributes with enqueue_at" do
+    Delayed::Worker.delay_jobs = true
+
+    job = HelloJob.new("Alex")
+    job.set(wait_until: 2.days.from_now)
+    job.job_attributes = { metadata: "foo" }
+    job.enqueue
+
+    assert_equal "foo", Delayed::Job.all.first.metadata
+  ensure
+    Delayed::Worker.delay_jobs = false
+  end
+
+  test "job attributes with insert_all_later" do
+    Delayed::Worker.delay_jobs = true
+
+    job = HelloJob.new("Alex")
+    job.job_attributes = { metadata: "foo" }
+    ActiveJob.perform_all_later([job])
+
+    assert_equal "foo", Delayed::Job.all.first.metadata
+  ensure
+    Delayed::Worker.delay_jobs = false
+  end
 end
