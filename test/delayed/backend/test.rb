@@ -69,8 +69,8 @@ module Delayed
           jobs.sort_by { |j| [j.priority, j.run_at] }[0..limit - 1]
         end
 
-        def self.insert_all(jobs)
-          jobs.each(&:save)
+        def self.insert_all(attributes)
+          attributes.each { |a| create(a) }
         end
 
         # Lock this job for this worker.
@@ -111,6 +111,12 @@ module Delayed
         def reload
           reset
           self
+        end
+
+        def attributes
+          instance_variables.to_h do |ivar|
+            [ivar.to_s.delete("@"), instance_variable_get(ivar)]
+          end
         end
       end
     end

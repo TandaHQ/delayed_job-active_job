@@ -39,7 +39,7 @@ module ActiveJob
           options = Delayed::Backend::JobPreparer.new(JobWrapper.new(job.serialize), queue: job.queue_name, priority: job.priority, run_at: job.run_at).prepare
           job_to_enqueue = Delayed::Job.new(options)
           if Delayed::Worker.delay_job?(job_to_enqueue)
-            job_to_enqueue
+            job_to_enqueue.attributes.except("id", "created_at", "updated_at")
           else
             job_to_enqueue.invoke_job
             nil
