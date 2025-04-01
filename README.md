@@ -8,15 +8,16 @@ The Delayed Job adapter will be [removed from Rails soon](https://github.com/rai
 
 If you are using a version of Rails that includes a Delayed Job adapter, using this gem will replace Rails' version with this gem's.
 
-This gem implements some new features beyond what the Rails adapter did:
+This gem implements some new features beyond what the Rails adapter did. See [features](#features) for instructions.
 
 - Support for [`perform_all_later`](https://github.com/rails/rails/pull/46603).
-- You can set `run_at` directly on a job instance.
+- You can set `run_at` when bulk enqueueing.
 - You can persist extra attributes on a job by writing to `job_attributes`.
 
 ---
 
 - [Quick start](#quick-start)
+- [Features](#features)
 - [Support](#support)
 - [License](#license)
 - [Contribution guide](#contribution-guide)
@@ -33,6 +34,44 @@ Configure the Active Job backend. [See the Rails docs for more information](http
 # config/application.rb
 config.active_job.queue_adapter = :delayed_job
 ```
+
+## Features
+
+This gem supports all the base functionality of any Active Job adapter. So anything in https://guides.rubyonrails.org/active_job_basics.html should work. If it doesn't please log an issue.
+
+### `perform_all_later`
+
+```ruby
+ActiveJob.perform_all_later([HelloJob.new("Jamie"), HelloJob.new("John"), HelloJob.new("Alex")])
+```
+
+Under the hood, this uses `Delayed::Job.insert_all` to insert all the jobs into the database using a single SQL query.
+
+### Set `run_at` when bulk enqueueing
+
+```ruby
+job = HelloJob.new("Alex")
+job.run_at = 1.hour.from_now
+ActiveJob.perform_all_later([job])
+```
+
+This is the equivalent to `HelloJob.set(wait: 1.hour).perform_later("Alex")`.
+
+### Extra attributes via `job_attributes`
+
+```ruby
+job = HelloJob.new("Alex")
+job.job_attributes = { metadata: "foo" }
+job.enqueue
+```
+
+```ruby
+job = HelloJob.new("Alex")
+job.job_attributes = { metadata: "foo" }
+ActiveJob.perform_all_later([job])
+```
+
+These examples would write `"foo"` into the `metadata` column on the `delayed_jobs` table. This works with any type of column, not just strings.
 
 ## Support
 
