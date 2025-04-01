@@ -7,7 +7,9 @@
 
 The Delayed Job adapter will be [removed from Rails soon](https://github.com/rails/rails/commit/d55ec9d5831b05ea5de75c105635c80376c0bf11). This gem extracts it so that you can continue using Delayed Job with Active Job.
 
-It also implements some new features the Rails adapter didn't support:
+If you are using a version of Rails that includes a Delayed Job adapter, using this gem will replace Rails' version with this gem's.
+
+This gem implements some new features beyond what the Rails adapter did:
 
 - Support for [`perform_all_later`](https://github.com/rails/rails/pull/46603).
 - You can set `run_at` directly on a job instance.
