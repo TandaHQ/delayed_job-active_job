@@ -21,7 +21,7 @@ module ActiveJob
     #   Rails.application.config.active_job.queue_adapter = :delayed_job
     class DelayedJobAdapter < ActiveJob::QueueAdapters::AbstractAdapter
       def enqueue(job)
-        delayed_job = Delayed::Job.enqueue(
+        delayed_job = Delayed::Worker.backend.enqueue(
           JobWrapper.new(job.serialize),
           queue: job.queue_name,
           priority: job.priority,
@@ -33,7 +33,7 @@ module ActiveJob
       end
 
       def enqueue_at(job, timestamp)
-        delayed_job = Delayed::Job.enqueue(
+        delayed_job = Delayed::Worker.backend.enqueue(
           JobWrapper.new(job.serialize),
           queue: job.queue_name,
           priority: job.priority,
@@ -50,10 +50,10 @@ module ActiveJob
             JobWrapper.new(job.serialize),
             queue: job.queue_name,
             priority: job.priority,
-            run_at: job.run_at,
+            run_at: job.run_at || Delayed::Worker.backend.db_time_now,
             **job.job_attributes
           ).prepare
-          job_to_enqueue = Delayed::Job.new(options)
+          job_to_enqueue = Delayed::Worker.backend.new(options)
           if Delayed::Worker.delay_job?(job_to_enqueue)
             job_to_enqueue.attributes.except("id", "created_at", "updated_at")
           else
@@ -61,7 +61,8 @@ module ActiveJob
             nil
           end
         end
-        Delayed::Job.insert_all(wrapped_jobs)
+        enqueued_jobs = Delayed::Worker.backend.insert_all(wrapped_jobs)
+        enqueued_jobs.count
       end
 
       class JobWrapper # :nodoc:

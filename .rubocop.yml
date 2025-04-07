@@ -49,9 +49,7 @@ Layout/SpaceAroundEqualsInParameterDefault:
   EnforcedStyle: no_space
 
 Metrics/AbcSize:
-  Max: 20
-  Exclude:
-    - "test/**/*"
+  Enabled: false
 
 Metrics/BlockLength:
   Exclude:

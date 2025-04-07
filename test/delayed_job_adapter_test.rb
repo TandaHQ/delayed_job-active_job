@@ -156,6 +156,18 @@ class DelayedJobAdapterTest < ActiveSupport::TestCase
     Delayed::Worker.delay_jobs = false
   end
 
+  test "implicit run_at with insert_all_later" do
+    Delayed::Worker.delay_jobs = true
+
+    job = HelloJob.new("Alex")
+    ActiveJob.perform_all_later([job])
+    assert_empty JobBuffer.values
+    run_at = Delayed::Job.all.first.run_at
+    assert_in_delta run_at, Time.new, 0.01
+  ensure
+    Delayed::Worker.delay_jobs = false
+  end
+
   test "job attributes with enqueue" do
     Delayed::Worker.delay_jobs = true
 

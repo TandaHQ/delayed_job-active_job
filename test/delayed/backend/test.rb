@@ -7,17 +7,7 @@ module Delayed
   module Backend
     module Test
       class Job
-        attr_accessor :id,
-                      :priority,
-                      :attempts,
-                      :handler,
-                      :last_error,
-                      :run_at,
-                      :locked_at,
-                      :locked_by,
-                      :failed_at,
-                      :queue,
-                      :metadata # for testing job_attributes
+        attr_accessor :id, :priority, :attempts, :handler, :last_error, :run_at, :locked_at, :locked_by, :failed_at, :queue, :metadata, :do_not_auto_set_run_at # for testing job_attributes
 
         include Delayed::Backend::Base
 
@@ -71,7 +61,12 @@ module Delayed
         end
 
         def self.insert_all(attributes)
-          attributes.each { |a| create(a) }
+          attributes.each do |a|
+            job = new(a)
+            job.do_not_auto_set_run_at = true
+            job.save
+            job.do_not_auto_set_run_at = nil
+          end
         end
 
         # Lock this job for this worker.
@@ -101,7 +96,7 @@ module Delayed
         end
 
         def save
-          self.run_at ||= Time.current
+          self.run_at ||= Time.current unless do_not_auto_set_run_at
 
           self.class.all << self unless self.class.all.include?(self)
           true
